@@ -1,8 +1,7 @@
 
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Home from "../screens/Home";
-import Header from '../Components/Header';
-
+import theme from '../themes';
 
 
 const Stack = createNativeStackNavigator();
@@ -12,9 +11,8 @@ const AppNavigator = () => {
             <Stack.Navigator
             initialRouteName="Home"
             screenOptions= {{
-                header:()=> <Header />,
-                contentStyle: {backgroundColor: 'backgroundColor: #ff0000ff',
-                 },
+                headerShown:false,
+                contentStyle: {backgroundColor: theme.colors.background,},
             }}
             >
                 <Stack.Screen name="Home" component={Home} />

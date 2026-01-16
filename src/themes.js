@@ -4,7 +4,7 @@ const theme = {
         white: '#f7f8f9',
         
         gray: '#424042',
-        background : '#fdfce8',
+        background : '#fffccbff',
         pink: '#f8b3bf',
 
         black: '#000000',
@@ -21,6 +21,8 @@ const theme = {
         xxl:40,
     },
     sizes: {
+        
+
         radiusSm: 8,
         radiusMd: 16,
         radiusLg: 24,
@@ -36,9 +38,10 @@ const theme = {
             md:16,
             lg:20,
             xl:24,
+            xxl:35
         },
         fontFamily:{
-            regular: 'Arial',
+            regular: 'Marlboro',
             bold: 'system font bold',
         },
     },

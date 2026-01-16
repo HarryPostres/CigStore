@@ -15,20 +15,22 @@ const Header = ({title = "CigsStore"}) => {
     }
 
     const styles = StyleSheet.create({ 
+
         container: {
-            paddingHorizontal: theme.spacing.lg,
-            backgroundColor: theme.colors.primary,
-            paddingBottom: theme.spacing.md,
-            alignItems: 'center',
+            
+            backgroundColor: theme.colors.red,
+            height: 45,
+            width: 310,
             justifyContent: 'center',
-
-    },
-    text: {
-        color: theme.colors.white,
-        fontSize: theme.typography.fontSize.lg,
-        fontFamily: theme.typography.fontFamily.bold,
-    },
-
+            paddingHorizontal: theme.spacing.md,        
+        },
+        text: {
+            color: theme.colors.black,
+            fontSize: theme.typography.fontSize.xxl,
+            fontFamily: theme.typography.fontFamily.regular,
+            textAlign: 'center',    
+        },
+      
 });
 
  export default Header;       
