@@ -22,7 +22,8 @@ const Header = ({title = "CigsStore"}) => {
             height: 45,
             width: 310,
             justifyContent: 'center',
-            paddingHorizontal: theme.spacing.md,        
+            paddingHorizontal: theme.spacing.md,      
+        alignSelf: 'center',
         },
         text: {
             color: theme.colors.black,
