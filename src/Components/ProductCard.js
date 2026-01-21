@@ -17,12 +17,13 @@ const ProductCard = ({nombre, price, imageUrl}) => {
 
 const styles = StyleSheet.create({
     cardContainer: {
-        backgroundColor: theme.colors.background,
+        backgroundColor: theme.colors.cardBackground,
         borderRadius: 10,
-        width: '50%',
+        width: '40%',
         maxWidth: 350,
         padding: theme.spacing.md,
         marginBottom: theme.spacing.lg,
+        marginHorizontal: theme.spacing.md,
     },
     
     productImage:{
@@ -32,11 +33,21 @@ const styles = StyleSheet.create({
             marginBottom: theme.spacing.md,
         },
         productName:{
+            textAlign: 'center',
+            fontFamily: theme.typography.fontFamily.bold,
             fontSize: theme.typography.fontSize.lg,
         },
         productPrice:{
+            textAlign: 'center',
             fontSize: theme.typography.fontSize.md,
             color: theme.colors.gray,
+        },
+        buyButton:{
+            alignSelf: 'center',
+            marginTop: theme.spacing.md,
+            backgroundColor: theme.colors.red,
+            padding: theme.spacing.sm,  
+            borderRadius: 5,
         },
 });
 

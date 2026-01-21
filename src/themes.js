@@ -5,7 +5,7 @@ const theme = {
         
         gray: '#424042',
         background : '#fffccbff',
-        pink: '#f8b3bf',
+        cardBackground: '#fcf687',
 
         black: '#000000',
     },

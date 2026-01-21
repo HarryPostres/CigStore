@@ -1,10 +1,13 @@
-import { View, Text, Image, StyleSheet, FlatList } from "react-native";
+import { View, Text, Image, StyleSheet, FlatList, Pressable } from "react-native";
 import { useEffect, useState, useMemo } from "react";
+import { useNavigation } from "@react-navigation/native";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../Firebase/firebaseConfig";
 import ProductCard from "../Components/ProductCard";
 import Header from "../Components/Header";
 import theme from "../themes";
+
+
 
 const images = [
   require("../../assets/images/imagen-1.jpg"),
@@ -14,6 +17,7 @@ const images = [
 ];
 
 const Home = () => {
+  const navigation = useNavigation();
   const [Products, setProducts] = useState([]);
 
   const randomImage = useMemo(() => {
@@ -40,6 +44,13 @@ const Home = () => {
     fetchProducts();
   }, []);
 
+  const randomProducts = useMemo(() => {
+    if (Products.length <=4) return Products;
+
+    const shuffled = [... Products].sort(()=> 0.5 - Math.random());
+    return shuffled.slice(0,4);
+  }, [Products]);
+
   console.log("Productos en state:", Products);
 
   return (
@@ -59,11 +70,12 @@ const Home = () => {
       </Text>
 
       <FlatList
-        data={Products}
+        data={randomProducts}
+        showsVerticalScrollIndicator={false}
         numColumns={2}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.List}
+
         renderItem={({ item }) => (
           <ProductCard
             nombre={item.nombre}
@@ -72,6 +84,15 @@ const Home = () => {
           />
         )}
       />
+
+      <Pressable 
+      onPress={() => navigation.navigate('Products')}
+      style = {styles.button}
+      > 
+    <Text style ={styles.buttonText}>
+      Ver más
+    </Text>  
+       </Pressable>
     </View>
   );
 };
@@ -91,10 +112,19 @@ const styles = StyleSheet.create({
     height: 250,
     alignSelf: "center",
   },
-    List: {
-        width: '100%',
-        alignItems: 'center',
-    },
+    button: {
+      alignSelf: 'center',
+      marginTop: theme.spacing.md,
+      padding: theme.spacing.sm,
+      backgroundColor: theme.colors.red,
+      width: '50%',
+  },
+
+  buttonText: {
+      fontSize: theme.typography.fontSize.xl,
+      fontFamily: theme.typography.fontFamily.regular,
+      textAlign: "center",
+  }
 });
 
 export default Home;

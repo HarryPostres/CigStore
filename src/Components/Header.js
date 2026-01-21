@@ -1,29 +1,53 @@
-import {View, Text} from 'react-native';
+import {View, Text,Pressable} from 'react-native';
 import {StyleSheet} from 'react-native';
 import theme from '../themes';
+import { useNavigation, useNavigationState } from '@react-navigation/native';
 import {  useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Header = ({title = "CigsStore"}) => {
     const insets = useSafeAreaInsets();
+    const navigation = useNavigation();
+    const canGoBack = navigation.canGoBack();
+
     return (
-        <View style={[ styles.container,
-              {paddingTop: insets.top}
-         ]}>
+        <View style ={styles.wraper}>
+        <View style = {[styles.safeArea, {height: insets.top}]} />
+        
+        <View style={ styles.container}>
+            {canGoBack && (
+                <Pressable onPress={() => navigation.goBack()}
+                style={styles.backButton}>
+                    <Text style={styles.backText}>←</Text>
+                </Pressable>
+            )}
+             
+
             <Text style={styles.text}>CigsStore</Text>
         </View>
-        )
-    }
+    
+        </View>
+        );
+    };
 
     const styles = StyleSheet.create({ 
 
-        container: {
-            
+        wraper: {
+            width: '100%',
             backgroundColor: theme.colors.red,
-            height: 45,
-            width: 310,
-            justifyContent: 'center',
-            paddingHorizontal: theme.spacing.md,      
-        alignSelf: 'center',
+        },
+        safeArea: {
+            width: '100%',
+        },
+        container: {
+           height: 60,
+           flexDirection: 'row',
+           alignItems: 'center',
+           justifyContent: 'center',
+           paddingHorizontal: theme.spacing.md,     
+        },
+        backButton: {
+            position: 'absolute',
+            left: theme.spacing.md,
         },
         text: {
             color: theme.colors.black,
@@ -31,6 +55,11 @@ const Header = ({title = "CigsStore"}) => {
             fontFamily: theme.typography.fontFamily.regular,
             textAlign: 'center',    
         },
+        backText: {
+            color: theme.colors.black,
+            fontFamily: theme.typography.fontFamily.regular,
+            fontSize: theme.typography.fontSize.xxl,
+        }
       
 });
 
