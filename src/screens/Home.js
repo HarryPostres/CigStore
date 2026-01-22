@@ -1,11 +1,11 @@
-import { View, Text, Image, StyleSheet, FlatList, Pressable } from "react-native";
+import { View, Text, Image, StyleSheet, FlatList, } from "react-native";
 import { useEffect, useState, useMemo } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../Firebase/firebaseConfig";
 import ProductCard from "../Components/ProductCard";
-import Header from "../Components/Header";
 import theme from "../themes";
+import AppLayout from "../Components/appLayout";
 
 
 
@@ -54,8 +54,9 @@ const Home = () => {
   console.log("Productos en state:", Products);
 
   return (
+    <AppLayout>
     <View style={styles.container}>
-      <Header />
+   
 
       <Text style={styles.welcomeText}>¡Bienvenido a CigsStore!</Text>
 
@@ -68,7 +69,7 @@ const Home = () => {
       <Text style={styles.welcomeText}>
         Te presentamos nuestro stock de cigarrillos:
       </Text>
-
+    
       <FlatList
         data={randomProducts}
         showsVerticalScrollIndicator={false}
@@ -85,15 +86,9 @@ const Home = () => {
         )}
       />
 
-      <Pressable 
-      onPress={() => navigation.navigate('Products')}
-      style = {styles.button}
-      > 
-    <Text style ={styles.buttonText}>
-      Ver más
-    </Text>  
-       </Pressable>
+
     </View>
+    </AppLayout>
   );
 };
 

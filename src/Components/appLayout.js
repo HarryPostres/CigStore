@@ -1,20 +1,23 @@
-import { View,styleSheet } from "react-native-web";
+import { View,StyleSheet } from "react-native";
 import Header from "./Header";
+import theme from "../themes";
 
-const AppLayout = ({chidren}) => {
+
+const AppLayout = ({children}) => {
     return (
         <View style = {styles.container}>
             <Header/>
             <View style= {styles.content}>
-
+                {children}
             </View>
         </View> 
     );
 };
 
-const styles = styleSheet.create({
+const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: theme.colors.background,
     },
     content: {
         flex: 1,

@@ -1,12 +1,12 @@
-import { View, Text, Image, StyleSheet, FlatList, Pressable } from "react-native";
+import { View, Text, StyleSheet, FlatList, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import theme from "../themes";
-import Header from "../Components/Header";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "../Firebase/firebaseConfig";
 import ProductCard from "../Components/ProductCard";
 import { useEffect, useState } from "react";
 import { Modal } from "react-native";
+import AppLayout from "../Components/appLayout";
 
 
 const Products = () => {
@@ -46,8 +46,10 @@ useEffect(() => {
   }, [orderByField, orderDirection, selectedType]);    
 
 return (
+    
+    <AppLayout>
     <View style={styles.container}>
-      <Header />
+
       <Text style={styles.text}>Productos</Text>
 
         <Pressable
@@ -136,6 +138,7 @@ return (
             )}
         />
     </View>
+</AppLayout>
   );
 
 }

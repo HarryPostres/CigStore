@@ -1,9 +1,8 @@
-import { StatusBar } from 'expo-status-bar';
-import {useFonts} from 'expo-font';
-import { StyleSheet, Text, View } from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
-import AppNavigator from './src/navigation/AppNavigator';
 
+import {useFonts} from 'expo-font';
+import { StyleSheet} from 'react-native';
+import {NavigationContainer} from '@react-navigation/native';
+import TabNavigator from './src/navigation/TabsNavigator';
 
 
 export default function App() {
@@ -16,7 +15,7 @@ export default function App() {
   
   return (
     <NavigationContainer>
-      <AppNavigator />
+      <TabNavigator/>
     </NavigationContainer>
   );
 }
@@ -24,7 +23,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+
     alignItems: 'center',
     justifyContent: 'center',
   },
