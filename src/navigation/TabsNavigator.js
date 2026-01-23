@@ -2,8 +2,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Home from '../screens/Home';
 import Products from '../screens/Products';
 import theme from '../themes';
+import Cart from "../screens/Cart";
 import { Ionicons } from '@expo/vector-icons';
-/* import { Ionicons } from '@expo/vector-icons'; */
+
 
 const Tab = createBottomTabNavigator();
 
@@ -20,7 +21,9 @@ const TabNavigator = () => {
                 if (route.name === 'Home'){
                     iconName = focused ? 'home' : 'home-outline';
                 }else if (route.name === 'Products'){
-                    iconName = focused ? 'storeFront' : 'storeFront-outline';
+                    iconName = focused ? 'storefront' : 'storefront-outline';
+                }else if (route.name === 'Cart'){
+                    iconName = focused ? 'cart' : 'cart-outline';
                 }
                 return(
                     <Ionicons
@@ -32,6 +35,7 @@ const TabNavigator = () => {
             },
         })}
         >
+            <Tab.Screen name="Cart" component={Cart}/>
             <Tab.Screen name='Home' component={Home}/>
             <Tab.Screen name='Products' component={Products}/>                          
        </Tab.Navigator>

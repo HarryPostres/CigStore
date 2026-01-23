@@ -134,6 +134,7 @@ return (
                 nombre={item.nombre}
                 price={item.price}
                 imageUrl={item.imageUrl}
+                id= {item.id}
                 />
             )}
         />

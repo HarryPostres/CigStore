@@ -79,6 +79,7 @@ const Home = () => {
 
         renderItem={({ item }) => (
           <ProductCard
+            id = {item.id}
             nombre={item.nombre}
             price={item.price}
             imageUrl={item.imageUrl}
