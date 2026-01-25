@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Home from '../screens/Home';
-import Products from '../screens/Products';
+import HomeStackNavigator from './HomeStackNavigator';
+import ProductsStackNavigator from './ProductStackNavigator';
 import theme from '../themes';
 import Cart from "../screens/Cart";
 import { Ionicons } from '@expo/vector-icons';
@@ -36,8 +36,8 @@ const TabNavigator = () => {
         })}
         >
             <Tab.Screen name="Cart" component={Cart}/>
-            <Tab.Screen name='Home' component={Home}/>
-            <Tab.Screen name='Products' component={Products}/>                          
+            <Tab.Screen name='HomeStack' component={HomeStackNavigator}/>
+            <Tab.Screen name='ProductsStack' component={ProductsStackNavigator}/>                          
        </Tab.Navigator>
     );
 };

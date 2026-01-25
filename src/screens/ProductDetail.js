@@ -10,8 +10,8 @@ const ProductDetail = ({ route }) => {
     return(
         <View style={styles.container}>
             <Image source={{ uri: product.imageUrl}} style={styles.image}/>
-            <Text>{product.name}</Text>
-            <Text>${product.Price}</Text>
+            <Text>{product.nombre}</Text>
+            <Text>${product.price}</Text>
 
             <Pressable
                 style={styles.cartButton}

@@ -1,13 +1,21 @@
 import {View, Text, Image, StyleSheet, Pressable} from 'react-native';
 import theme from '../themes';
 import {useCart} from '../Context/CartContext';
+import { useNavigation } from '@react-navigation/native';
 
 
 const ProductCard = ({id,nombre, price, imageUrl}) => {
+    const navigation = useNavigation();
     const {addToCart} = useCart();
-    return (
 
-        <View style={styles.cardContainer}>
+    const product = {id, nombre, price, imageUrl};
+    return (
+    <Pressable
+        style= {styles.cardContainer}
+        onPress={()=> 
+        navigation.navigate('ProductDetail',{product})
+    }    
+    >
             <Image source={{uri: imageUrl}} style={styles.productImage} />
             <Text style={styles.productName}>{nombre}</Text>
             <Text style={styles.productPrice}>${price}</Text>
@@ -23,10 +31,10 @@ const ProductCard = ({id,nombre, price, imageUrl}) => {
                 >
                 <Text style={styles.buyButtonText}>Buy Now</Text>
             </Pressable>
-        </View>
+    </Pressable>
     
 );
-}
+};
 
 const styles = StyleSheet.create({
     cardContainer: {
@@ -63,7 +71,5 @@ const styles = StyleSheet.create({
             borderRadius: 5,
         },
 });
-
-/* SEGUIR EN ESTE ARCHIVO */
 
 export default ProductCard;

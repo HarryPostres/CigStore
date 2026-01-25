@@ -1,6 +1,6 @@
 import {View, Text, StyleSheet, FlatList, Pressable} from 'react-native';
 import {useCart} from '../Context/CartContext';
-import AppLayout from '../Components/appLayout';
+import AppLayout from '../components/appLayout';
 import theme from '../themes';
 
 const Cart = () => {
