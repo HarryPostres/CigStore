@@ -1,3 +1,4 @@
+
 const theme = {
     colors:{
         red: '#ff0000ff',
@@ -9,16 +10,14 @@ const theme = {
 
         black: '#000000',
     },
-    textures: {
-        gold: require('../assets/textures/gold-texture.jpg'),
-    },
+
     spacing: {
-        xs: 4,
-        sm: 8,
-        md: 16,
-        lg: 24,
-        xl: 32,
-        xxl:40,
+        xs: '4px',
+        sm: '8px',
+        md: '16px',
+        lg: '24px',
+        xl: '32px',
+        xxl:'40px',
     },
     sizes: {
         
@@ -42,7 +41,6 @@ const theme = {
         },
         fontFamily:{
             regular: 'Marlboro',
-            bold: 'system font bold',
         },
     },
 };

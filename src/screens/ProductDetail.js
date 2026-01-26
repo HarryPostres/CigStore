@@ -26,7 +26,7 @@ const ProductDetail = ({ route }) => {
 const styles = StyleSheet.create({
     container:{
         flex: 1,
-        backgroundColor: theme.spacing.lg,
+        backgroundColor: theme.colors.background,
         padding: theme.spacing.lg,
     },
     image:{
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     },
     cartButtonText:{
         color: '#fff',
-        fontFamily: theme.typography.fontSize.md,
+        fontFamily: theme.typography.fontFamily.regular,
     },
 });
 export default ProductDetail;

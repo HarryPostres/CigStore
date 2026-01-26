@@ -13,8 +13,8 @@ const ProductsStackNavigator = () => {
                 contentStyle:{backgroundColor: theme.colors.background},
                 }}
         >
-            <stack.Screen name="Products" content={Products}/>
-            <stack.Screens name="ProductDetail" component={ProductDetail}/>
+            <stack.Screen name="Products" component={Products}/>
+            <stack.Screen name="ProductDetail" component={ProductDetail}/>
         </stack.Navigator>
     );
 };

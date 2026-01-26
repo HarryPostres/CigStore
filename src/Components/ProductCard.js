@@ -1,12 +1,13 @@
 import {View, Text, Image, StyleSheet, Pressable} from 'react-native';
 import theme from '../themes';
-import {useCart} from '../Context/CartContext';
+import { CartContext } from '../Context/CartContext';
 import { useNavigation } from '@react-navigation/native';
+import { useContext } from 'react';
 
 
 const ProductCard = ({id,nombre, price, imageUrl}) => {
     const navigation = useNavigation();
-    const {addToCart} = useCart();
+    const {addToCart} = useContext(CartContext);
 
     const product = {id, nombre, price, imageUrl};
     return (
@@ -55,7 +56,7 @@ const styles = StyleSheet.create({
         },
         productName:{
             textAlign: 'center',
-            fontFamily: theme.typography.fontFamily.bold,
+            fontFamily: theme.typography.fontFamily.regular,
             fontSize: theme.typography.fontSize.lg,
         },
         productPrice:{

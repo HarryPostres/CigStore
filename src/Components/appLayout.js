@@ -1,6 +1,6 @@
 import { View,StyleSheet } from "react-native";
-import Header from "./Header";
-import theme from "../themes";
+import Header from "./Header.js";
+import theme from "../themes.js";
 
 
 const AppLayout = ({children}) => {

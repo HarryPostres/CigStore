@@ -6,7 +6,7 @@ import { db } from "../firebase/firebaseConfig";
 import ProductCard from "../components/ProductCard";
 import { useEffect, useState } from "react";
 import { Modal } from "react-native";
-import AppLayout from "../components/appLayout";
+import AppLayout from "../Components/appLayout";
 
 
 const Products = () => {

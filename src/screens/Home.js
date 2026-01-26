@@ -3,9 +3,9 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/firebaseConfig";
-import ProductCard from "../components/ProductCard";
+import ProductCard from "../Components/ProductCard";
 import theme from "../themes";
-import AppLayout from "../components/appLayout";
+import AppLayout from "../Components/appLayout";
 
 
 
