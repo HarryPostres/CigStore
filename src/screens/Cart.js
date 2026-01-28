@@ -2,9 +2,11 @@ import {View, Text, StyleSheet, FlatList, Pressable} from 'react-native';
 import {useCart} from '../Context/CartContext';
 import AppLayout from '../Components/appLayout';
 import theme from '../themes';
+import {useNavigation} from '@react-navigation/native';
 
 const Cart = () => {
     const {cart, increaseQty, decreaseQty, removeFromCart, total  } = useCart();
+    const navigation = useNavigation();
 
     return (
         <AppLayout>
@@ -41,6 +43,18 @@ const Cart = () => {
             {cart.length > 0 && (
                 <Text style={styles.total}>Total: ${total}</Text>
             )}
+
+            {cart.length > 0 && (
+                <Pressable
+                    style={styles.checkout}
+                    onPress={() => navigation.navigate('Checkout')}
+                >   
+                    <Text style={styles.checkoutText}>Finalizar compra</Text>
+                </Pressable>
+            )}
+
+
+
         </View>
         </AppLayout>
     );
@@ -76,6 +90,18 @@ const styles = StyleSheet.create({
         textAlign: "center",
         marginTop: theme.spacing.lg,
     },
+    checkout: {
+        backgroundColor: theme.colors.red,
+        padding: theme.spacing.md,
+        borderRadius: 8,
+        marginTop: theme.spacing.md,
+        alignItems: 'center',
+    },
+    checkoutText:{
+        color: '#fff',
+        fontSize: theme.typography.fontSize.md,
+    },
+
 });
 
 export default Cart;

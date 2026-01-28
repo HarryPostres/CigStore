@@ -3,6 +3,7 @@ import HomeStackNavigator from './HomeStackNavigator';
 import ProductsStackNavigator from './ProductStackNavigator';
 import theme from '../themes';
 import Cart from "../screens/Cart";
+import CartStackNavigator from './CartStackNavigator';
 import { Ionicons } from '@expo/vector-icons';
 
 
@@ -37,7 +38,7 @@ const TabNavigator = () => {
         >
             <Tab.Screen name="Home" component={HomeStackNavigator}/>
             <Tab.Screen name="Products" component={ProductsStackNavigator}/>
-            <Tab.Screen name="Cart" component={Cart}/>                          
+            <Tab.Screen name="Cart" component={CartStackNavigator}/>                          
        </Tab.Navigator>
     );
 };

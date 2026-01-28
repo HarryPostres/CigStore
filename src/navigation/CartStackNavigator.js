@@ -1,21 +1,29 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Cart from '../screens/Cart';
 import Checkout from '../screens/Checkout';
+import Receipt from '../screens/Receipt'
 
 const stack = createNativeStackNavigator();
 
 const CartStackNavigator = () => {
     return (
-        <Stack.Navigator>
-            <Stack.Screen
-            name = "CartMain"
-            Component = {Cart}
+        <stack.Navigator
+                    screenOptions= {{
+                headerShown:false,
+         }}>
+            <stack.Screen
+            name = "Cart"
+            component = {Cart}
             />
-            <Stack.Screen
+            <stack.Screen
             name ="Checkout"
             component={Checkout}
             />
-        </Stack.Navigator>
+            <stack.Screen
+            name="Receipt"
+            component ={Receipt}
+            />
+        </stack.Navigator>
     );
 };
 
