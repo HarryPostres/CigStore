@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, TextInput, Pressable, Alert, Image,ScrollView} from 'react-native';
+import {View, Text, StyleSheet, TextInput, Pressable, Alert, Image,ScrollView, Plataform} from 'react-native';
 import {useState} from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {useCart} from '../Context/CartContext';
@@ -117,25 +117,36 @@ const Checkout = ({navigation}) => {
      return true;
     };
 
-    const handleConfirm= async () => {
+    /* SEGUIR ARREGLANDO ERROR DEL HANDLE CONFIRM */
+
+    const handleConfirm = async () => {
         if (!validate()) return;
 
         try {
-            console.log('DNI:', dniImage);
-            console.log('click confirmado');
+            
 
-            const fileInfo = await FileSystem.getInfoAsync(dniImage);
-            if (!fileInfo.exists){
-                throw new Error('Archivo no encontrado');
-            }
-
-            const blob = await (await fetch (fileInfo.uri)).blob();
+            const blob = await new Promise ((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function (){
+                    resolve(xhr.response);
+                };
+                xhr.onerror = function (e) {
+                    console.log("Error en XHR", e);
+                    reject(new TypeError("Network request failed"));
+                };
+                xhr.responseType = "blob";
+                xhr.open("GET", dniImage, true);
+                xhr.send(null);
+            });
 
             const fileRef = ref(
                 storage,
                 `dni/${Date.now()}.jpg`
             );
-            await uploadBytes(fileRef, blob);
+
+            const uploadResult = await uploadBytes(fileRef, blob);
+            console.log('imagen subida');
+      
             const dniURL = await getDownloadURL(fileRef);
 
             const order = {
@@ -157,12 +168,14 @@ const Checkout = ({navigation}) => {
                 collection(db, 'orders'),
                 order
             );
+
             order.id = docRef.id;
             clearCart();
 
             navigation.replace('Receipt', {
-                order
+                order: { ...order, id: docRef.id}
             });  
+
         } catch (error){
             console.log(error);
 
@@ -265,8 +278,6 @@ return(
     </ScrollView>
 );
 };
-
-/* SEGUIR DESDE LOS ESTILOS */
 
 const styles = StyleSheet.create({
     container:{
