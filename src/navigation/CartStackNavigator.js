@@ -12,7 +12,7 @@ const CartStackNavigator = () => {
                 headerShown:false,
          }}>
             <stack.Screen
-            name = "Cart"
+            name = "CartStack"
             component = {Cart}
             />
             <stack.Screen

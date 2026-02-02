@@ -15,7 +15,7 @@ const HomeStackNavigator = () => {
                 contentStyle: {backgroundColor: theme.colors.background,},
             }}
             >
-                <Stack.Screen name="Home" component={Home} />
+                <Stack.Screen name="HomeStack" component={Home} />
                 <Stack.Screen name= "ProductDetail" component = {ProductDetail}/>
             </Stack.Navigator>
     );

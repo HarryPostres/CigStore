@@ -1,354 +1,477 @@
-import {View, Text, StyleSheet, TextInput, Pressable, Alert, Image,ScrollView, Plataform} from 'react-native';
-import {useState} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Alert,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  Pressable,
+  Platform,
+} from 'react-native';
+
+import { useState, useEffect } from 'react';
+
 import * as ImagePicker from 'expo-image-picker';
-import {useCart} from '../Context/CartContext';
+import * as WebBrowser from "expo-web-browser";
+
+import { useCart } from '../Context/CartContext';
 import theme from '../themes';
-import {db, storage} from '../Firebase/firebaseConfig';
-import {collection, addDoc, serverTimestamp} from 'firebase/firestore';
-import {ref, uploadBytes, getDownloadURL} from 'firebase/storage';
-import * as FileSystem from 'expo-file-system';
 
-const formatExpiry = (text) => {
-    let cleaned = text.replace(/\D/g, '');
+import { db, storage } from '../Firebase/firebaseConfig';
 
-    if (cleaned.length >= 3){
-        return cleaned.slice(0, 2) + '/' + cleaned.slice(2, 4);
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+webBrowser.maybeCompleteAuthSession();
+
+/* ===========================
+   COMPONENTE
+=========================== */
+
+const Checkout = ({ navigation }) => {
+
+  const { cart, total, clearCart } = useCart();
+
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+
+  const [dniImage, setDniImage] = useState(null);
+
+/* FUNCION DE PAGO */
+const payWithMercadoPago = async (orderId) => {
+  try {
+
+    console.log("Iniciando pago MP...");
+
+    const response = await fetch("http://192.168.1.36:3000/create_preference", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        items: cart.map(item => ({
+          title: item.nombre,
+          quantity: item.quantity,
+          unit_price: item.price,
+          currency_id: "ARS",
+        })),
+        orderId,
+      }),
+    });
+
+    const data = await response.json();
+
+    console.log("MP RESPONSE:", data);
+
+    if (!data.init_point) {
+      throw new Error("No se recibió init_point");
     }
 
-    return cleaned;
-};
-
-const formatCardNumber = (text) => {
-    const cleaned = text.replace(/\D/g, '');
-
-    const groups = cleaned.match(/.{1,4}/g);
-
-    if (groups){
-        return groups.join(' ');
+    // 👉 WEB
+    if (Platform.OS === "web") {
+      window.location.href = data.init_point;
     }
-    return cleaned;
+
+    // 👉 ANDROID / IOS
+    else {
+      await WebBrowser.openBrowserAsync(data.init_point);
+    }
+
+  } catch (error) {
+
+    console.log("MP PAY ERROR:", error);
+
+    Alert.alert("Error", "No se pudo iniciar el pago");
+
+  }
 };
 
-const isValidExpiry = (expiry) => {
-    if (!/^\d{2}\/\d{2}$/.test(expiry)) return false;
 
-    const [mm, yy] = expiry.split('/').map(Number);
 
-    if (mm< 1 || mm > 12) return false;
+  /* ===========================
+     PERMISOS
+  =========================== */
 
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear() % 100;
+  useEffect(() => {
 
-    if (yy < currentYear) return false;
+    (async () => {
 
-    if (yy === currentYear && mm < currentMonth) return false;
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (status !== 'granted') {
+
+        Alert.alert(
+          'Permiso requerido',
+          'Se necesita acceso a la galería'
+        );
+      }
+
+    })();
+
+  }, []);
+
+
+
+  /* ===========================
+     PICK IMAGE
+  =========================== */
+
+  const pickImage = async () => {
+
+    try {
+
+      const result =
+        await ImagePicker.launchImageLibraryAsync({
+
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          quality: 0.8,
+        });
+
+
+      if (!result.canceled) {
+
+        setDniImage(result.assets[0].uri);
+      }
+
+    } catch (error) {
+
+      console.log('PICK ERROR:', error);
+
+      Alert.alert(
+        'Error',
+        'No se pudo abrir la galería'
+      );
+    }
+  };
+
+
+
+  /* ===========================
+     VALIDAR
+  =========================== */
+
+  const validate = () => {
+
+    if (!name || !address || !phone) {
+
+      Alert.alert(
+        'Error',
+        'Completá todos los datos'
+      );
+
+      return false;
+    }
+
+
+    if (!dniImage) {
+
+      Alert.alert(
+        'Error',
+        'Subí una foto del DNI'
+      );
+
+      return false;
+    }
+
 
     return true;
-};
+  };
 
-const isValidCard= (number) => {
-            let sum = 0;
-            let shouldDouble = false;
-            
-            for (let i = number.length - 1; i >= 0; i--){
-                let digit = parseInt(number[i]);
 
-                if (shouldDouble){
-                    digit *= 2;
-                    if (digit > 9) digit -= 9;
-                }
-                sum+= digit;
-                shouldDouble = !shouldDouble
-            }
-        return sum % 10 === 0;
-       };
 
-const Checkout = ({navigation}) => {
-    const {cart, total, clearCart} = useCart();
-    const [name, setName] = useState('');
-    const [address, setAdress] = useState('');    
-    const [phone, setPhone] = useState('');
+  /* ===========================
+     CONFIRMAR
+  =========================== */
 
-    const [cardNumber, setCardNumber] = useState('');    
-    const [expiry, setExpiry] = useState('');
-    
-    const [cvv, setCvv] = useState('');
+  const handleConfirm = async () => {
 
-    const [dniImage, setDniImage] = useState(null);
+    if (!validate()) return;
 
-    const pickImage = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            quality: 0.7,
-        });
-        if (!result.canceled) {
-            setDniImage(result.assets[0].uri);
-        }
-    };
 
-    const validate = () => {
-        if (!name || !address || !phone){
-            Alert.alert('Error', 'Completá tus datos personales');
-            return false;
-        }
-        const cleanCard = cardNumber.replace(/\s/g, '');
+    try {
 
-        if (!isValidCard(cleanCard)){
-            Alert.alert('Error', 'Numero de tarjeta inválido');
-            return false;
-        }
+      console.log('Iniciando checkout...');
 
-        if (!isValidExpiry(expiry)){
-            Alert.alert('Error', 'Tarjeta encida o fecha inválida')
-            return false;
-        }
 
-        if (cvv.length !== 3){
-            Alert.alert('Error', 'cvv inválido');
-            return false;
-        }
+     const response = await fetch (dniImage);
 
-        if (!dniImage){
-            Alert.alert('Error','Debes subir una foto del dni');
-            return false;
-        }
-    
-     return true;
-    };
+     const blob = await response.blob();
 
-    /* SEGUIR ARREGLANDO ERROR DEL HANDLE CONFIRM */
+      console.log('Imagen lista');
 
-    const handleConfirm = async () => {
-        if (!validate()) return;
 
-        try {
-            
+      /* Nombre único */
+      const fileName = `dni/${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2)}.jpg`;
 
-            const blob = await new Promise ((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.onload = function (){
-                    resolve(xhr.response);
-                };
-                xhr.onerror = function (e) {
-                    console.log("Error en XHR", e);
-                    reject(new TypeError("Network request failed"));
-                };
-                xhr.responseType = "blob";
-                xhr.open("GET", dniImage, true);
-                xhr.send(null);
-            });
 
-            const fileRef = ref(
-                storage,
-                `dni/${Date.now()}.jpg`
-            );
+      const fileRef = ref(storage, fileName);
 
-            const uploadResult = await uploadBytes(fileRef, blob);
-            console.log('imagen subida');
-      
-            const dniURL = await getDownloadURL(fileRef);
 
-            const order = {
-                name,
-                address,
-                phone,
-                cart,
-                total,
+      /* Subir */
+      await uploadBytes(fileRef, blob);
 
-                dni: dniURL,
+      console.log('Imagen subida');
 
-                date: new Date().toLocaleString(),
-                createdAt: serverTimestamp(),
-            };
 
-            console.log('subiendo orden...')
+      /* URL */
+      const dniURL = await getDownloadURL(fileRef);
 
-            const docRef = await addDoc(
-                collection(db, 'orders'),
-                order
-            );
+      console.log('URL:', dniURL);
 
-            order.id = docRef.id;
-            clearCart();
 
-            navigation.replace('Receipt', {
-                order: { ...order, id: docRef.id}
-            });  
 
-        } catch (error){
-            console.log(error);
+      /* Pedido */
+      const order = {
 
-            Alert.alert(
-                'Error',
-                'No se pudo procesar la compra'
-            );
-            
-        }
-    };
+        name,
+        address,
+        phone,
 
-return(
-    <ScrollView style={styles.container}>
-        <Text style={styles.title}>Resumen</Text>
+        cart,
+        total,
 
-        {cart.map((item) => (
-            <View key={item.id} style={styles.row}>
-                <Text>{item.nombre}</Text>
-                <Text>{item.quantity}</Text>
-            </View>
-        ))}
-    
-    <Text style={styles.total}>Total: ${total}</Text>
-    <Text style={styles.subtitle}>Datos personales:</Text>
+        dni: dniURL,
 
-        <TextInput
-        placeholder='Nombre'
+        status: 'pending',
+
+        createdAt: serverTimestamp(),
+      };
+
+
+      /* Guardar */
+      const docRef = await addDoc(
+        collection(db, 'orders'),
+        order
+      );
+
+
+      console.log('Orden:', docRef.id);
+
+
+      clearCart();
+
+
+      navigation.replace('Receipt', {
+        order: { ...order, id: docRef.id }
+      });
+
+
+    } catch (error) {
+
+      console.log('CHECKOUT ERROR:', error);
+
+      Alert.alert(
+        'Error',
+        error?.message || 'No se pudo completar el pedido'
+      );
+    }
+  };
+
+
+
+  /* ===========================
+     UI
+  =========================== */
+
+  return (
+
+    <ScrollView
+      style={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
+
+      <Text style={styles.title}>
+        Resumen
+      </Text>
+
+
+
+      {cart.map((item) => (
+
+        <View key={item.id} style={styles.row}>
+
+          <Text>{item.nombre}</Text>
+
+          <Text>{item.quantity}</Text>
+
+        </View>
+
+      ))}
+
+
+
+      <Text style={styles.total}>
+        Total: ${total}
+      </Text>
+
+
+
+      <Text style={styles.subtitle}>
+        Datos personales
+      </Text>
+
+
+
+      <TextInput
+        placeholder="Nombre"
         style={styles.input}
         value={name}
         onChangeText={setName}
-        />
-        <TextInput
-        placeholder='Direccion'
+      />
+
+
+      <TextInput
+        placeholder="Dirección"
         style={styles.input}
         value={address}
-        onChangeText={setAdress}
-        />
-        <TextInput
-        placeholder='Teléfono'
-        keyboardType='phone-pad'
+        onChangeText={setAddress}
+      />
+
+
+      <TextInput
+        placeholder="Teléfono"
+        keyboardType="phone-pad"
         style={styles.input}
         value={phone}
         onChangeText={setPhone}
+      />
+
+
+
+      <Text style={styles.subtitle}>
+        Identidad
+      </Text>
+
+
+
+      <Pressable
+        style={styles.upload}
+        onPress={pickImage}
+      >
+
+        <Text style={styles.uploadText}>
+          {dniImage ? 'Cambiar DNI' : 'Subir DNI'}
+        </Text>
+
+      </Pressable>
+
+
+
+      {dniImage && (
+
+        <Image
+          source={{ uri: dniImage }}
+          style={styles.dniImage}
+          pointerEvents="none"
         />
 
-      
-        <Text>Datos de pago:</Text>
-        <TextInput
-            placeholder = "XXXX XXXX XXXX XXXX"
-            style={styles.input}
-            keyboardType="number-pad"
-            maxLength={19}
-            value= {cardNumber}
-            onChangeText= {(text) => {
-                const formatted = formatCardNumber(text);
-                setCardNumber(formatted);
-            }}
-        />
-            <View style={styles.cardRow}>
-                <TextInput
-                    placeholder= "MM/YY"
-                    style={[styles.input, styles.half]}
-                    maxLength={5}
-                    value={expiry}
-                    keyboardType='number-pad'
-                    onChangeText={(text) => setExpiry(formatExpiry(text))}
-                />
-                
-                <TextInput
-                    placeholder="CVV"
-                    style= {[styles.input, styles.half]}
-                    keyboardType='number-pad'
-                    maxLength={3}
-                    value={cvv}
-                    onChangeText={setCvv}
-                />
+      )}
 
-            </View>
 
-            <Text style={styles.subtitle}>Identidad</Text>
 
-            <Pressable style= {styles.upload} onPress= {pickImage}>
-                <Text style={styles.uploadText}>
-                    {dniImage ? 'Cambiar foto DNI' : 'subir foto DNI'}
-                </Text>
-            </Pressable>
-
-            {dniImage && (
-                <Image source={{uri: dniImage}}
-                style= {styles.dniImage}
-                />
-            )}
-
-    <Pressable 
+      <TouchableOpacity
         style={styles.button}
         onPress={handleConfirm}
-    >
-        <Text style= {styles.buttonText}>Confirmar</Text>
-    </Pressable>
+        activeOpacity={0.7}
+      >
+
+        <Text style={styles.buttonText}>
+          Confirmar pedido
+        </Text>
+
+      </TouchableOpacity>
+
+
+
     </ScrollView>
-);
+  );
 };
 
+
+
+/* ===========================
+   STYLES
+=========================== */
+
 const styles = StyleSheet.create({
-    container:{
-        flex: 1,
-        padding: theme.spacing.lg,
-        backgroundColor: theme.colors.background,
-    },
-    title:{
-        fontSize: theme.typography.fontSize.xl,
-        textAlign: 'center',
-        marginBottom: theme.spacing.lg,
-    },
-    subtitle:{
-        marginTop: theme.spacing.lg,
-        fontSize: theme.typography.fontSize.lg,
-    },
-    row:{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: theme.spacing.sm,
-    },
-    total:{
-        fontSize: theme.typography.fontSize.lg,
-        marginVertical: theme.spacing.md,
-        textAlign: "center",
-    },
-    input:{
-        borderWidth: 1,
-        borderColor: theme.colors.gray,
-        borderRadius:6,
-        padding: theme.spacing.sm,
-        marginTop: theme.spacing.sm,
-    },
-    cardRow: {
-        flexDirection:'row',
-        justifyContent:'space-between',
-        gap: theme.spacing.md,
-    },
-    half:{
-        flex:1,
-    },
-    upload:{
-        marginTop: theme.spacing.md,
-        backgroundColor: theme.colors.gray,
-        padding:theme.spacing.sm,
-        borderRadius: 6,
-        alignItems: 'center',
-    },
-    uploadText:{
-        color: '#fff',
-    },
 
-    dniImage:{
-        width: '100%',
-        height: 200,
-        resizeMode: 'contain',
-        marginTop: theme.spacing.sm,
-        borderRadius: 8,
-    },
-    
+  container: {
+    flex: 1,
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.background,
+  },
 
-    button:{
-        marginTop: theme.spacing.xl,
-        backgroundColor: theme.colors.red,
-        padding: theme.spacing.md,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    buttonText:{
-        color: "#fff"
-    },
+  title: {
+    fontSize: theme.typography.fontSize.xl,
+    textAlign: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+
+  subtitle: {
+    marginTop: theme.spacing.lg,
+    fontSize: theme.typography.fontSize.lg,
+  },
+
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.sm,
+  },
+
+  total: {
+    fontSize: theme.typography.fontSize.lg,
+    marginVertical: theme.spacing.md,
+    textAlign: 'center',
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: theme.colors.gray,
+    borderRadius: 6,
+    padding: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
+  },
+
+  upload: {
+    marginTop: theme.spacing.md,
+    backgroundColor: theme.colors.gray,
+    padding: theme.spacing.sm,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+
+  uploadText: {
+    color: '#fff',
+  },
+
+  dniImage: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'contain',
+    marginTop: theme.spacing.sm,
+    borderRadius: 8,
+  },
+
+  button: {
+    marginTop: theme.spacing.xl,
+    backgroundColor: theme.colors.red,
+    padding: theme.spacing.md,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+
 });
 
 export default Checkout;
