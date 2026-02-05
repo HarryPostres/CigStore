@@ -24,7 +24,7 @@ import { db, storage } from '../Firebase/firebaseConfig';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-webBrowser.maybeCompleteAuthSession();
+WebBrowser.maybeCompleteAuthSession();
 
 /* ===========================
    COMPONENTE
@@ -254,7 +254,10 @@ const payWithMercadoPago = async (orderId) => {
 
       console.log('Orden:', docRef.id);
 
+      await payWithMercadoPago(docRef.id);
 
+
+/* 
       clearCart();
 
 
@@ -262,7 +265,7 @@ const payWithMercadoPago = async (orderId) => {
         order: { ...order, id: docRef.id }
       });
 
-
+ */
     } catch (error) {
 
       console.log('CHECKOUT ERROR:', error);
