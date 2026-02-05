@@ -28,6 +28,7 @@
     "plugins": [
       "expo-font",
       "expo-web-browser"
-    ]
+    ],
+    "scheme":"cigstore"
   }
 }

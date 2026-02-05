@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react';
 
 import * as ImagePicker from 'expo-image-picker';
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 
 import { useCart } from '../Context/CartContext';
 import theme from '../themes';
@@ -38,247 +39,140 @@ const Checkout = ({ navigation }) => {
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
 
-  const [dniImage, setDniImage] = useState(null);
+const [dniImage, setDniImage] = useState(null);
 
 /* FUNCION DE PAGO */
-const payWithMercadoPago = async (orderId) => {
+const payWithMercadoPago = async (orderId, orderForReceipt) => {
   try {
-
     console.log("Iniciando pago MP...");
 
-    const response = await fetch("http://192.168.1.36:3000/create_preference", {
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+    const redirectBaseUrl = Linking.createURL("checkout-result");
+
+    const response = await fetch(`${apiUrl}/create_preference`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        items: cart.map(item => ({
+        items: cart.map((item) => ({
           title: item.nombre,
-          quantity: item.quantity,
-          unit_price: item.price,
+          quantity: Number(item.quantity),
+          unit_price: Number(item.price),
           currency_id: "ARS",
         })),
         orderId,
       }),
     });
 
-    const data = await response.json();
+    if (!response.ok) {
+      const backendError = await response.text();
+      throw new Error(`Backend error: ${backendError}`);
+    }
 
+    const data = await response.json();
     console.log("MP RESPONSE:", data);
 
-    if (!data.init_point) {
+    const checkoutUrl = data.init_point || data.sandbox_init_point;
+
+    if (!checkoutUrl) {
       throw new Error("No se recibió init_point");
     }
 
     // 👉 WEB
     if (Platform.OS === "web") {
-      window.location.href = data.init_point;
+      window.location.href = checkoutUrl;
+      return;
     }
+    
+   await WebBrowser.openBrowserAsync(checkoutUrl);
 
-    // 👉 ANDROID / IOS
-    else {
-      await WebBrowser.openBrowserAsync(data.init_point);
-    }
-
-  } catch (error) {
-
+   Alert.alert(
+    "Pago iniciado",
+    "si completaste el pago, verifica el estado del pedidoe n admin"
+   );
+  } catch (error){
     console.log("MP PAY ERROR:", error);
+    Alert.alert("Error", "no se pudo iniciar el pago");
+  }
+};
 
-    Alert.alert("Error", "No se pudo iniciar el pago");
+  /* ===========================
+     PERMISOS
+  =========================== */
 
+useEffect(() => {
+  (async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Se necesita acceso a la galería');
+    }
+  })();
+}, []);
+
+/* ===========================
+   FUNCIONES
+=========================== */
+
+const pickImage = async () => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 1,
+  });
+
+  if (!result.canceled) {
+    setDniImage(result.assets[0].uri);
+  }
+};
+
+const handleConfirm = async () => {
+  try {
+    if (!name || !address || !phone || !dniImage) {
+      Alert.alert('Error', 'Por favor completa todos los campos');
+      return;
+    }
+
+    let dniURL = '';
+
+    if (dniImage && !dniImage.startsWith('http')) {
+      const response = await fetch(dniImage);
+      const blob = await response.blob();
+      const storageRef = ref(storage, `dni/${Date.now()}`);
+      await uploadBytes(storageRef, blob);
+      dniURL = await getDownloadURL(storageRef);
+    } else {
+      dniURL = dniImage;
+    }
+
+    const order = {
+      name,
+      address,
+      phone,
+      cart,
+      total,
+      dni: dniURL,
+      createdAt: serverTimestamp(),
+    };
+
+    const docRef = await addDoc(collection(db, 'orders'), order);
+
+    console.log('Orden:', docRef.id);
+
+    await payWithMercadoPago(docRef.id, order);
+  } catch (error) {
+    console.log('CHECKOUT ERROR:', error);
+    Alert.alert('Error', error?.message || 'No se pudo completar el pedido');
   }
 };
 
 
 
   /* ===========================
-     PERMISOS
+     UI
   =========================== */
-
-  useEffect(() => {
-
-    (async () => {
-
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (status !== 'granted') {
-
-        Alert.alert(
-          'Permiso requerido',
-          'Se necesita acceso a la galería'
-        );
-      }
-
-    })();
-
-  }, []);
-
-
-
-  /* ===========================
-     PICK IMAGE
-  =========================== */
-
-  const pickImage = async () => {
-
-    try {
-
-      const result =
-        await ImagePicker.launchImageLibraryAsync({
-
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          quality: 0.8,
-        });
-
-
-      if (!result.canceled) {
-
-        setDniImage(result.assets[0].uri);
-      }
-
-    } catch (error) {
-
-      console.log('PICK ERROR:', error);
-
-      Alert.alert(
-        'Error',
-        'No se pudo abrir la galería'
-      );
-    }
-  };
-
-
-
-  /* ===========================
-     VALIDAR
-  =========================== */
-
-  const validate = () => {
-
-    if (!name || !address || !phone) {
-
-      Alert.alert(
-        'Error',
-        'Completá todos los datos'
-      );
-
-      return false;
-    }
-
-
-    if (!dniImage) {
-
-      Alert.alert(
-        'Error',
-        'Subí una foto del DNI'
-      );
-
-      return false;
-    }
-
-
-    return true;
-  };
-
-
-
-  /* ===========================
-     CONFIRMAR
-  =========================== */
-
-  const handleConfirm = async () => {
-
-    if (!validate()) return;
-
-
-    try {
-
-      console.log('Iniciando checkout...');
-
-
-     const response = await fetch (dniImage);
-
-     const blob = await response.blob();
-
-      console.log('Imagen lista');
-
-
-      /* Nombre único */
-      const fileName = `dni/${Date.now()}_${Math.random()
-        .toString(36)
-        .slice(2)}.jpg`;
-
-
-      const fileRef = ref(storage, fileName);
-
-
-      /* Subir */
-      await uploadBytes(fileRef, blob);
-
-      console.log('Imagen subida');
-
-
-      /* URL */
-      const dniURL = await getDownloadURL(fileRef);
-
-      console.log('URL:', dniURL);
-
-
-
-      /* Pedido */
-      const order = {
-
-        name,
-        address,
-        phone,
-
-        cart,
-        total,
-
-        dni: dniURL,
-
-        status: 'pending',
-
-        createdAt: serverTimestamp(),
-      };
-
-
-      /* Guardar */
-      const docRef = await addDoc(
-        collection(db, 'orders'),
-        order
-      );
-
-
-      console.log('Orden:', docRef.id);
-
-      await payWithMercadoPago(docRef.id);
-
-
-/* 
-      clearCart();
-
-
-      navigation.replace('Receipt', {
-        order: { ...order, id: docRef.id }
-      });
-
- */
-    } catch (error) {
-
-      console.log('CHECKOUT ERROR:', error);
-
-      Alert.alert(
-        'Error',
-        error?.message || 'No se pudo completar el pedido'
-      );
-    }
-  };
-
-
-
   /* ===========================
      UI
   =========================== */
