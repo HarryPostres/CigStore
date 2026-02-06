@@ -43,6 +43,34 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ ok: true });
 });
 
+app.get('/mp-return', (req, res)=> {
+  const status = typeof req.query.status === 'string' 
+  ? req.query.status: 'unknown';
+  const orderId = typeof req.query.orderId === 'string'
+  ? req.query.orderId: '';
+
+  const appUrl = `cigstore://checkout-result?status=${
+    encodeURIComponent(status)}&orderId=${encodeURIComponent(orderId)}`;
+
+    res
+    .status(200)
+    .set('Content-type', 'text/html; charset=utf-8')
+    .send(`<!doctype html>
+      <html>
+        <head>
+         <meta charset="utf-8" />
+         <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <title>Volviendo a la app...</title>
+        </head>
+      <body style="font-family: sans-serif; padding: 24px;">
+        <p>Volviendo a la app...</p>
+      <script>window.location.replace(${JSON.stringify(appUrl)});</script>
+      </body>
+      </html>`);
+});
+
+
+
 app.post('/create_preference', async (req, res) => {
   try {
     const { items, orderId, backUrls } = req.body;

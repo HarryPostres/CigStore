@@ -1,101 +1,134 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Alert,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  Pressable,
-  Platform,
-} from 'react-native';
 
-import { useState, useEffect } from 'react';
-
-import * as ImagePicker from 'expo-image-picker';
-import * as WebBrowser from "expo-web-browser";
+ import {
+   View,
+   Text,
+   StyleSheet,
+   TextInput,
+   Alert,
+   Image,
+   ScrollView,
+   TouchableOpacity,
+   Pressable,
+   Platform,
+ } from 'react-native';
+ 
+ import { useState, useEffect } from 'react';
+ 
+ import * as ImagePicker from 'expo-image-picker';
+ import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
-
-import { useCart } from '../Context/CartContext';
-import theme from '../themes';
-
-import { db, storage } from '../Firebase/firebaseConfig';
-
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-
-WebBrowser.maybeCompleteAuthSession();
-
-/* ===========================
-   COMPONENTE
-=========================== */
-
-const Checkout = ({ navigation }) => {
-
-  const { cart, total, clearCart } = useCart();
-
-  const [name, setName] = useState('');
-  const [address, setAddress] = useState('');
-  const [phone, setPhone] = useState('');
-
-const [dniImage, setDniImage] = useState(null);
-
-/* FUNCION DE PAGO */
+ 
+ import { useCart } from '../Context/CartContext';
+ import theme from '../themes';
+ 
+ import { db, storage } from '../Firebase/firebaseConfig';
+ 
+ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+ 
+ WebBrowser.maybeCompleteAuthSession();
+ 
+ /* ===========================
+    COMPONENTE
+ =========================== */
+ 
+ const Checkout = ({ navigation }) => {
+ 
+   const { cart, total, clearCart } = useCart();
+ 
+   const [name, setName] = useState('');
+   const [address, setAddress] = useState('');
+   const [phone, setPhone] = useState('');
+ 
+   const [dniImage, setDniImage] = useState(null);
+ 
+ /* FUNCION DE PAGO */
 const payWithMercadoPago = async (orderId, orderForReceipt) => {
-  try {
-    console.log("Iniciando pago MP...");
-
+   try {
+     console.log("Iniciando pago MP...");
+ 
     const apiUrl = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
-    const redirectBaseUrl = Linking.createURL("checkout-result");
-
-    const response = await fetch(`${apiUrl}/create_preference`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const cleanApiUrl = apiUrl.replace(/\/$/, "");
+ 
+    const response = await fetch(`${cleanApiUrl}/create_preference`, {
+       method: "POST",
+       headers: {
+         "Content-Type": "application/json",
+       },
+       body: JSON.stringify({
         items: cart.map((item) => ({
-          title: item.nombre,
+           title: item.nombre,
           quantity: Number(item.quantity),
           unit_price: Number(item.price),
-          currency_id: "ARS",
-        })),
-        orderId,
-      }),
-    });
-
+           currency_id: "ARS",
+         })),
+         orderId,
+        backUrls: {
+          success: `${cleanApiUrl}/mp-return?status=approved&orderId=${orderId}`,
+          failure: `${cleanApiUrl}/mp-return?status=rejected&orderId=${orderId}`,
+          pending: `${cleanApiUrl}/mp-return?status=pending&orderId=${orderId}`,
+        },
+       }),
+     });
+ 
     if (!response.ok) {
       const backendError = await response.text();
       throw new Error(`Backend error: ${backendError}`);
     }
-
+ 
     const data = await response.json();
-    console.log("MP RESPONSE:", data);
-
+     console.log("MP RESPONSE:", data);
+ 
     const checkoutUrl = data.init_point || data.sandbox_init_point;
 
     if (!checkoutUrl) {
-      throw new Error("No se recibió init_point");
-    }
-
+       throw new Error("No se recibió init_point");
+     }
+ 
     // 👉 WEB
-    if (Platform.OS === "web") {
+     if (Platform.OS === "web") {
       window.location.href = checkoutUrl;
       return;
-    }
-    
-   await WebBrowser.openBrowserAsync(checkoutUrl);
+     }
+ 
+    // 👉 ANDROID / IOS
+    const returnUrl = Linking.createURL("checkout-result");
+    const result = await WebBrowser.openAuthSessionAsync(checkoutUrl, returnUrl);
 
-   Alert.alert(
-    "Pago iniciado",
-    "si completaste el pago, verifica el estado del pedidoe n admin"
-   );
-  } catch (error){
-    console.log("MP PAY ERROR:", error);
-    Alert.alert("Error", "no se pudo iniciar el pago");
-  }
-};
+    if (result.type === "success" && result.url) {
+      const parsed = Linking.parse(result.url);
+      const status = parsed?.queryParams?.status;
+
+      if (status === "approved") {
+        clearCart();
+        navigation.replace("Receipt", { order: orderForReceipt });
+        return;
+      }
+
+      if (status === "pending") {
+        Alert.alert("Pago pendiente", "Mercado Pago indicó pago pendiente.");
+        return;
+      }
+
+      Alert.alert("Pago no aprobado", "El pago fue rechazado o cancelado.");
+      return;
+    }
+
+    if (result.type === "cancel") {
+      Alert.alert("Pago cancelado", "Cerraste la ventana de Mercado Pago.");
+      return;
+    }
+
+    Alert.alert("Atención", "No se pudo confirmar el estado del pago.");
+  } catch (error) {
+     console.log("MP PAY ERROR:", error);
+     Alert.alert("Error", "No se pudo iniciar el pago");
+   }
+ };
+ 
+ 
+ 
+
 
   /* ===========================
      PERMISOS
@@ -161,7 +194,10 @@ const handleConfirm = async () => {
 
     console.log('Orden:', docRef.id);
 
-    await payWithMercadoPago(docRef.id, order);
+    await payWithMercadoPago(docRef.id, {
+      ...order, id: docRef.id, date: new Date().toLocaleDateString()
+    });
+
   } catch (error) {
     console.log('CHECKOUT ERROR:', error);
     Alert.alert('Error', error?.message || 'No se pudo completar el pedido');
