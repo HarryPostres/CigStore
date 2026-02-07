@@ -82,20 +82,17 @@ app.post('/create_preference', async (req, res) => {
     }
 
     const parsedBackUrls = {
-      success: isValidUrl(backUrls?.success) ? backUrls.success : defaultBackUrls.success,
-      failure: isValidUrl(backUrls?.failure) ? backUrls.failure : defaultBackUrls.failure,
-      pending: isValidUrl(backUrls?.pending) ? backUrls.pending : defaultBackUrls.pending,
+      success: isValidHttpUrl(backUrls?.success) ? backUrls.success : defaultBackUrls.success,
+      failure: isValidHttpUrl(backUrls?.failure) ? backUrls.failure : defaultBackUrls.failure,
+      pending: isValidHttpUrl(backUrls?.pending) ? backUrls.pending : defaultBackUrls.pending,
     };
 
-    const preferenceBody= {
+    const preferenceBody = {
       items,
       external_reference: orderId,
       back_urls:parsedBackUrls,
-    }
-    if (isValidHttpUrl(parsedBackUrls.success)){
-      preferenceBody.auto_return = 'approved';
-    }
-
+    };
+    
     const preference = new Preference(client);
 
     const response = await preference.create({

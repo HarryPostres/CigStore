@@ -28,6 +28,21 @@ import * as Linking from "expo-linking";
  
  WebBrowser.maybeCompleteAuthSession();
  
+
+ const getApiBaseUrl = () => {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+
+  if (envUrl && envUrl.trim().length > 0){
+    return envUrl.replace(/\/$/, "");
+  }
+  const fallbackUrl = Platform.select ({
+    android: "http://10.0.2.2:3000",
+    default: "http://localhost:3000",
+  });
+
+  return fallbackUrl.replace (/\/$/, "");
+};
+
  /* ===========================
     COMPONENTE
  =========================== */
@@ -43,14 +58,17 @@ import * as Linking from "expo-linking";
    const [dniImage, setDniImage] = useState(null);
  
  /* FUNCION DE PAGO */
+
+
+
+
 const payWithMercadoPago = async (orderId, orderForReceipt) => {
    try {
      console.log("Iniciando pago MP...");
  
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
-    const cleanApiUrl = apiUrl.replace(/\/$/, "");
+const apiBaseUrl = getApiBaseUrl();
  
-    const response = await fetch(`${cleanApiUrl}/create_preference`, {
+    const response = await fetch(`${apiBaseUrl}/create_preference`, {
        method: "POST",
        headers: {
          "Content-Type": "application/json",
@@ -64,9 +82,9 @@ const payWithMercadoPago = async (orderId, orderForReceipt) => {
          })),
          orderId,
         backUrls: {
-          success: `${cleanApiUrl}/mp-return?status=approved&orderId=${orderId}`,
-          failure: `${cleanApiUrl}/mp-return?status=rejected&orderId=${orderId}`,
-          pending: `${cleanApiUrl}/mp-return?status=pending&orderId=${orderId}`,
+          success: `${apiBaseUrl}/mp-return?status=approved&orderId=${orderId}`,
+          failure: `${apiBaseUrl}/mp-return?status=rejected&orderId=${orderId}`,
+          pending: `${apiBaseUrl}/mp-return?status=pending&orderId=${orderId}`,
         },
        }),
      });
